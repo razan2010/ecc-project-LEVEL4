@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-
-// COMBINED IMPORT: All 3 functions from the controller go inside these brackets together:
 const { 
+  checkoutOrder, 
   getOrders, 
-  updateOrderStatus,
-  checkoutOrder 
+  getOrderById, 
+  updateOrderStatus 
 } = require('../controllers/ordersController');
-
 const { orderSchema } = require('../validators/orderValidator');
 const validate = require('../utils/validate');
 
-// ROUTE ENDPOINTS
-router.post('/checkout', orderSchema, validate, checkoutOrder);
-router.get('/', getOrders); 
-router.put('/:id/status', updateOrderStatus); 
+router.post('/', orderSchema, validate, checkoutOrder);
+router.get('/', getOrders);
+router.get('/:id', getOrderById);
+router.patch('/:id/status', updateOrderStatus);
 
 module.exports = router;
+
+

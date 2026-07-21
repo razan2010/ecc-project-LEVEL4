@@ -4,19 +4,25 @@ const {
   addToCart, 
   getCart, 
   updateCartQuantity, 
-  removeItemFromCart,clearCart
+  removeItemFromCart,
+  clearCart 
 } = require('../controllers/cartsController');
-
 const { cartSchema } = require('../validators/cartValidator');
 const validate = require('../utils/validate');
 
-router.post('/add', cartSchema, validate, addToCart);
-router.get('/:userId', getCart);
+// Endpoint: GET /api/cart (Get current cart with populated items)
+router.get('/', getCart);
 
-router.put('/update-quantity', cartSchema, validate, updateCartQuantity);
+// Endpoint: DELETE /api/cart (Clear the entire cart)
+router.delete('/', clearCart);
 
-router.delete('/remove-item', removeItemFromCart);
+// Endpoint: POST /api/cart/items (Add product to cart)
+router.post('/items', cartSchema, validate, addToCart);
 
-router.post('/clear', clearCart); 
+// Endpoint: PUT /api/cart/items/:productId (Update product quantity inside path parameter)
+router.put('/items/:productId', updateCartQuantity);
+
+// Endpoint: DELETE /api/cart/items/:productId (Remove product from cart row)
+router.delete('/items/:productId', removeItemFromCart);
 
 module.exports = router;

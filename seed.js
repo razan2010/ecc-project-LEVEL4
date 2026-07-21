@@ -5,33 +5,44 @@ const Product = require('./src/models/Product');
 
 const seedDatabase = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://razan:0000@ac-clkxdl8-shard-00-00.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-01.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-02.fb3b2nh.mongodb.net:27017/?ssl=true&replicaSet=atlas-zlba49-shard-0&authSource=admin&appName=Cluster0);')
+    
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://razan:0000@ac-clkxdl8-shard-00-00.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-01.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-02.fb3b2nh.mongodb.net:27017/?ssl=true&replicaSet=atlas-zlba49-shard-0&authSource=admin&appName=Cluster0');
     console.log('Seed: Connected to Database...');
 
-    // Clear old data to start fresh
-    await Category.deleteMany();
+  
     await Product.deleteMany();
+    await Category.deleteMany();
     console.log('Seed: Old data cleared.');
 
-    // 1. Insert Categories
-    const electronics = await Category.create({ name: 'Electronics', description: 'Tech Gadgets' });
-    const clothing = await Category.create({ name: 'Clothing', description: 'Apparel and Styles' });
-    console.log('Seed: Categories created successfully.');
+    
+    const electronics = await Category.create({ name: 'Electronics', description: 'Tech and gadgets' });
+    const clothing = await Category.create({ name: 'Clothing', description: 'Apparel and styles' });
+    const homeLiving = await Category.create({ name: 'Home & Living', description: 'Furniture and decor' });
 
-    // 2. Insert Products linking to Category IDs
-    await Product.create([
-      { name: 'Smartphone Pro', price: 999, countInStock: 10, category: electronics._id },
-      { name: 'Wireless Earbuds', price: 149, countInStock: 25, category: electronics._id },
-      { name: 'Running Shoes', price: 85, countInStock: 15, category: clothing._id },
-      { name: 'Cotton T-Shirt', price: 25, countInStock: 50, category: clothing._id }
-    ]);
+    
+    const productsData = [
+      { name: 'iPhone 14', description: 'Apple smartphone', price: 899, stock: 50, category: electronics._id },
+      { name: 'Dell Laptop', description: 'Workstation laptop', price: 999, stock: 7, category: electronics._id },
+      { name: 'Men T-Shirt', description: 'Cotton basic tee', price: 29, stock: 25, category: clothing._id },
+      { name: 'Blue Jeans', description: 'Denim slim fit jeans', price: 50, stock: 15, category: clothing._id },
+      { name: 'Sofa', description: 'Comfortable living room couch', price: 399, stock: 5, category: homeLiving._id },
+      { name: 'Table Lamp', description: 'Modern desk lighting', price: 49, stock: 20, category: homeLiving._id }
+    ];
 
-    console.log('Seed: Products populated successfully.');
+    const insertedProducts = await Product.create(productsData);
+
+    // 5. Show success message & Print counts of items inserted
     console.log('Database Seeding Complete! 🌱');
-    process.exit(0);
+    console.log(`Successfully inserted 3 categories.`);
+    console.log(`Successfully inserted ${insertedProducts.length} products.`);
+
   } catch (error) {
     console.error('Seeding error:', error);
-    process.exit(1);
+  } finally {
+    // 6. Disconnect from DB cleanly
+    await mongoose.disconnect();
+    console.log('Disconnected from MongoDB.');
+    process.exit(0);
   }
 };
 

@@ -6,11 +6,12 @@ const AppError = require('../utils/customErrors');
 const { multiplyPriceByQuantity } = require('../utils/priceCalculator');
 
 exports.checkoutOrder = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
+  const { userId, shippingAddress } = req.body;
+  const targetUser = userId || "customer_99";
 
-  const cart = await Cart.findOne({ userId }).populate('items.product');
+  const cart = await Cart.findOne({ user: targetUser }).populate('items.product');
   if (!cart || cart.items.length === 0) {
-    throw new AppError('The checkout operational execution process failed: Cart is completely empty.', 400);
+    throw new AppError('Checkout failed: Shopping cart is completely empty.', 400);
   }
 
   let totalPrice = 0;
@@ -19,48 +20,54 @@ exports.checkoutOrder = asyncHandler(async (req, res) => {
   for (const item of cart.items) {
     const product = await Product.findById(item.product._id);
     
-    if (!product || product.countInStock < item.quantity) {
-      throw new AppError(`Stock conflict exception. ${product ? product.name : 'Targeted product reference'} has insufficient remaining balances.`, 400);
+    if (!product || product.stock < item.quantity) {
+      throw new AppError(`Stock deficit error: ${product ? product.name : 'Product'} has insufficient stock.`, 400);
     }
 
-    // Cost multi-unit calculator tool adjusts values proportionally depending on item count (2x, 3x, etc.)
     const itemTotalCost = multiplyPriceByQuantity(product.price, item.quantity);
     totalPrice += itemTotalCost;
 
     orderItems.push({
       product: product._id,
+      name: product.name,
       quantity: item.quantity,
-      priceAtPurchase: product.price
+      price: product.price
     });
 
-    product.countInStock -= item.quantity;
+    product.stock -= item.quantity;
     await product.save();
   }
 
-  const order = new Order({ userId, items: orderItems, totalPrice });
-  await order.save();
-  await Cart.deleteOne({ userId });
+  const generatedOrderNumber = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-  res.status(201).json({ success: true, message: 'Checkout finalized and order logged.', data: order });
+  const order = new Order({
+    orderNumber: generatedOrderNumber,
+    userId: targetUser,
+    items: orderItems,
+    totalPrice,
+    shippingAddress: shippingAddress || { street: "123 Main St", city: "Cairo", country: "Egypt" }
+  });
+
+  await order.save();
+  await Cart.deleteOne({ user: targetUser });
+
+  res.status(201).json({ success: true, message: 'Order created successfully', data: order });
 });
-// ADD TO THE ABSOLUTE BOTTOM OF src/controllers/ordersController.js
-// 2. READ ALL ORDERS (ADMIN FEATURE)
+
 exports.getOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find().populate('items.product');
+  const orders = await Order.find();
   res.status(200).json({ success: true, data: orders });
 });
 
-// 3. UPDATE ORDER STATUS (ADMIN FEATURE)
-exports.updateOrderStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body; 
-
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { status },
-    { new: true, runValidators: true }
-  );
-
+exports.getOrderById = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
   if (!order) throw new AppError('Order not found.', 404);
+  res.status(200).json({ success: true, data: order });
+});
 
+exports.updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+  if (!order) throw new AppError('Order not found.', 404);
   res.status(200).json({ success: true, message: 'Order status updated.', data: order });
 });
