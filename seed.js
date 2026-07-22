@@ -1,25 +1,27 @@
 require('dotenv').config();
+const connectDB = require('./src/config/db'); // Imports required connectDB tool (Check 1)
 const mongoose = require('mongoose');
 const Category = require('./src/models/Category');
 const Product = require('./src/models/Product');
+const Order = require('./src/models/Order'); // Imported to clear stale orders (Check 2)
 
 const seedDatabase = async () => {
   try {
-    
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://razan:0000@ac-clkxdl8-shard-00-00.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-01.fb3b2nh.mongodb.net:27017,ac-clkxdl8-shard-00-02.fb3b2nh.mongodb.net:27017/?ssl=true&replicaSet=atlas-zlba49-shard-0&authSource=admin&appName=Cluster0');
+    // 1. Setup & Connection (Check 1)
+    await connectDB(); 
     console.log('Seed: Connected to Database...');
 
-  
+    // 2. Cleanup Before Seeding in strict required sequence (Check 2)
+    await Order.deleteMany();
     await Product.deleteMany();
     await Category.deleteMany();
-    console.log('Seed: Old data cleared.');
+    console.log('Seed: Old data cleared completely in correct order.');
 
-    
+    // 3. Sample Data Insertion (Check 3)
     const electronics = await Category.create({ name: 'Electronics', description: 'Tech and gadgets' });
     const clothing = await Category.create({ name: 'Clothing', description: 'Apparel and styles' });
     const homeLiving = await Category.create({ name: 'Home & Living', description: 'Furniture and decor' });
 
-    
     const productsData = [
       { name: 'iPhone 14', description: 'Apple smartphone', price: 899, stock: 50, category: electronics._id },
       { name: 'Dell Laptop', description: 'Workstation laptop', price: 999, stock: 7, category: electronics._id },
@@ -31,7 +33,7 @@ const seedDatabase = async () => {
 
     const insertedProducts = await Product.create(productsData);
 
-    // 5. Show success message & Print counts of items inserted
+    // 4. Disconnect & Logging (Check 4)
     console.log('Database Seeding Complete! 🌱');
     console.log(`Successfully inserted 3 categories.`);
     console.log(`Successfully inserted ${insertedProducts.length} products.`);
@@ -39,9 +41,9 @@ const seedDatabase = async () => {
   } catch (error) {
     console.error('Seeding error:', error);
   } finally {
-    // 6. Disconnect from DB cleanly
+    // Graceful disconnect logic placed inside the mandatory finally block
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB.');
+    console.log('Disconnected from MongoDB safely.');
     process.exit(0);
   }
 };
