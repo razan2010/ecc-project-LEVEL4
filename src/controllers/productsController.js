@@ -7,7 +7,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
   if (req.body.category) {
     const categoryExists = await Category.findById(req.body.category);
     if (!categoryExists) {
-      throw new AppError('Validation rule violation: The specified category does not exist.', 400);
+      throw new AppError('Category not found', 404);
     }
   }
 
@@ -59,7 +59,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (req.body.category) {
     const categoryExists = await Category.findById(req.body.category);
     if (!categoryExists) {
-      throw new AppError('Validation rule violation: The specified category does not exist.', 400);
+      throw new AppError('Category not found', 404);
     }
   }
 
