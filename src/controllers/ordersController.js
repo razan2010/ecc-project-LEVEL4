@@ -67,7 +67,18 @@ exports.getOrderById = asyncHandler(async (req, res) => {
 
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+
+  const validStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+  if (!validStatuses.includes(status)) {
+    throw new AppError('Validation status (enum) Return 400 if invalid', 400);
+  }
+
+  const order = await Order.findByIdAndUpdate(
+    req.params.id, 
+    { status }, 
+    { new: true, runValidators: true }
+  );
+  
   if (!order) throw new AppError('Order not found.', 404);
   res.status(200).json({ success: true, message: 'Order status updated.', data: order });
 });
