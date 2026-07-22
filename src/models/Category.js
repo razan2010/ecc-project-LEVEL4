@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const categorySchema = new mongoose.Schema({
   name: { 
     type: String, 
-    required: true, 
+    required: [true, "Category name configuration is required"], 
     unique: true, 
     trim: true 
   },
@@ -20,8 +20,7 @@ const categorySchema = new mongoose.Schema({
   timestamps: true 
 });
 
-
-categorySchema.pre('save', function(next) {
+categorySchema.pre('save', function() {
   if (this.isModified('name')) {
     this.slug = this.name
       .toLowerCase()
