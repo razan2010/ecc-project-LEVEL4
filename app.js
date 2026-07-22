@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const sanitize = require('mongo-sanitize'); 
 const connectDB = require('./src/config/db');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -12,13 +13,19 @@ const app = express();
 
 app.use(express.json());
 
+
+app.use((req, res, next) => {
+  req.body = sanitize(req.body);
+  req.query = sanitize(req.query);
+  req.params = sanitize(req.params);
+  next();
+});
+
 connectDB();
 
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/carts', cartsRoutes);
-
-// FAILSAFE BOUNDS: Mounts both versions so it works perfectly no matter what you type!
 app.use('/api/orders', ordersRoutes);
 app.use('/api/order', ordersRoutes);
 
