@@ -3,29 +3,29 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
   name: { 
     type: String, 
-    required: true, 
+    required: [true, "Product name configuration is required"], 
     trim: true 
   },
   description: { 
     type: String, 
-    required: true, 
+    required: [true, "Product description configuration is required"], 
     trim: true 
   },
   price: { 
     type: Number, 
-    required: true, 
+    required: [true, "Price parameter must be a valid positive decimal number"], 
     min: 0 
   },
   stock: { 
     type: Number, 
-    required: true, 
+    required: [true, "Stock allocation level must be a non-negative whole integer"], 
     min: 0, 
     default: 0 
   },
   category: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Category', 
-    required: true 
+    required: [true, "Invalid reference Category database target identity ID structure"] 
   },
   images: { 
     type: [String], 
@@ -37,7 +37,6 @@ const productSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Virtual attribute field handler calculating storage balances on the fly
 productSchema.virtual('inStock').get(function() {
   return this.stock > 0;
 });
